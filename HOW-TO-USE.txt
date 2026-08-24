@@ -1,0 +1,97 @@
+================================================
+  VISITING CARD SCANNER  —  KAISE USE KAREIN
+        (100% FREE — koi kharcha nahi)
+================================================
+
+Ye app aapke visiting cards ke photo ya PDF se data nikaal ke ek list
+me daal deta hai, jise aap Excel me export kar sakte ho.
+Card padhna aapke PHONE ke andar hi hota hai (on-device OCR) —
+koi paisa nahi, koi login nahi, koi API key nahi.
+
+Sabse accurate: ENGLISH cards. (Gujarati/Hindi optional — kam accurate.)
+
+
+------------------------------------------------
+PEHLI BAAR
+------------------------------------------------
+Pehli baar app khulte waqt OCR engine (~11MB) download hota hai.
+Uske baad app OFFLINE bhi chalta hai — internet ki zaroorat nahi.
+
+
+------------------------------------------------
+STEP 1 — CARD ADD KARO  ("Scan" tab)
+------------------------------------------------
+2 tareeke:
+
+A) PDF:  "File / Photo" -> apni PDF chuno.
+   - Ek PDF me BAHUT saare card ho sakte hain.
+   - Upar switch dekho: "Har card ke 2 side (aage+piche)?"
+       OFF = PDF ka har 1 page  = 1 card (sirf aage)
+       ON  = PDF ke har 2 page  = 1 card (aage + piche)
+
+B) Photo:  "Camera" se khich lo, ya "File / Photo" se gallery se
+   ek saath kai photo chuno. Wahi switch yahaan bhi lagta hai
+   (ON = har 2 photo 1 card, OFF = har 1 photo 1 card).
+
+Phir app ek-ek card padh ke list me daal dega (progress dikhega).
+
+
+------------------------------------------------
+EK PDF ME KITNE CARD DAALU? (zaroori)
+------------------------------------------------
+- Behtar: ek PDF me ~25 se 50 card (sirf aage waale).
+          Aage+piche waale ho to ek PDF me ~15 se 25 card.
+- PDF ka size ~40-50 MB se kam rakho.
+- Har card padhne me phone pe ~1-3 second lagta hai, isliye 200-300
+  card ki ek hi PDF me kaafi time lagega. Chhoti-chhoti PDF me baato.
+- Ginti ki koi hard limit nahi — bas badi PDF dheemi + zyada memory
+  leti hai. Multiple PDF ek-ek karke daalna zyada aasaan rehta hai.
+- Tip: PDF banane ke chakkar me na pado to seedha gallery se 20-30
+  photo ek saath select karna sabse fast hai.
+
+
+------------------------------------------------
+STEP 2 — CHECK / EDIT  ("Cards" tab)
+------------------------------------------------
+- Har card pe tap karo -> saari details edit kar sakte ho.
+- Neeche "Poora scan text" box me app ne jo padha wo dikhta hai +
+  upar card ki photo -> dekh ke jaldi se theek kar lo.
+- Search box se naam/phone/company dhundo.
+- Category se filter (Doctor / Pharma / Medical / Hospital ...).
+- 📞 button se seedha call.
+
+
+------------------------------------------------
+CALL DAY / CALL TIMING (pen se likhi note)
+------------------------------------------------
+Card pe aapne pen se jo call ke din/time likhe hain, app unhe bhi
+padhne ki koshish karta hai:
+   M / Mon = Monday      Th / Thu = Thursday
+   T / Tue = Tuesday     F  / Fri = Friday
+   W / Wed = Wednesday   S  / Sat = Saturday
+   Time jaise 11-1, 5 to 8, 10:30-1:30
+
+ZAROORI: Handwriting (haath ki likhaawat) OCR se HAMESHA sahi nahi
+padhti. Isliye Call Day / Call Timing ko ek "guess" samjho —
+edit screen me card ki photo dekh ke 2 second me theek/confirm kar lo.
+Ye dono Excel me alag column me bhi aate hain.
+
+
+------------------------------------------------
+STEP 3 — EXCEL EXPORT  ("Export" tab)
+------------------------------------------------
+- "Excel (.xlsx)" -> saara data (Call Day/Timing sameet) ek file me.
+- "CSV" bhi le sakte ho.
+- "Backup (.json)" -> photo + data ka pura backup. Har kuch din me lo.
+  Naye phone pe "Restore" se wapas aa jaata hai.
+
+
+------------------------------------------------
+BEHTAR RESULT KE TIPS
+------------------------------------------------
+- Achhi roshni, seedha (tirchha nahi), poora card frame me -> zyada sahi.
+- Pen note saaf aur bade akshar me ho to behtar padhega.
+- Ek baar 20-30 card se shuru karo, sab theek lage to zyada karo.
+- English cards sabse accurate. Gujarati/Hindi card ho to "Settings"
+  me us language ka switch ON karo (thoda dheema hoga).
+================================================

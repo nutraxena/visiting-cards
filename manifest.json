@@ -1,0 +1,14 @@
+{
+  "name": "Visiting Card Scanner",
+  "short_name": "CardScan",
+  "description": "Scan doctor / pharma / medical visiting cards (English + Gujarati) into a data table and export to Excel",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0d9488",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

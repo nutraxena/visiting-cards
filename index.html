@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d9488">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon.svg">
+<title>Visiting Card Scanner</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#273449; --line:#334155;
+    --text:#e2e8f0; --muted:#94a3b8; --accent:#0d9488; --accent2:#0f766e;
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --gold:#fbbf24;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text);
+    padding-bottom:calc(76px + env(safe-area-inset-bottom));
+  }
+  h1,h2,h3{margin:0;}
+  button{font-family:inherit;}
+
+  /* Header */
+  header{
+    position:sticky; top:0; z-index:30;
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+  }
+  header h1{font-size:18px; display:flex; align-items:center; gap:8px;}
+  header p{margin:3px 0 0; font-size:12px; opacity:.92;}
+  .count-badge{margin-left:auto; background:rgba(255,255,255,.2); border-radius:20px; padding:3px 11px; font-size:12px; font-weight:700;}
+
+  /* Sections */
+  section{display:none; padding:14px;}
+  section.active{display:block;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px;}
+  .card .lbl{font-size:11px; color:var(--muted); margin-bottom:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;}
+
+  .btn{
+    width:100%; border:none; border-radius:12px; padding:15px; cursor:pointer;
+    background:linear-gradient(135deg,var(--accent2),var(--accent)); color:#fff;
+    font-size:15px; font-weight:700; box-shadow:0 3px 10px rgba(13,148,136,.35);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.sec{background:var(--panel2); color:var(--text); box-shadow:none; border:1px solid var(--line);}
+  .btn.danger{background:var(--panel2); color:#fca5a5; box-shadow:none; border:1px solid #7f1d1d;}
+  .btn.small{padding:11px; font-size:13px; border-radius:10px;}
+  .btn[disabled]{opacity:.5; pointer-events:none;}
+  .btn-row{display:flex; gap:10px;}
+  .btn-row .btn{flex:1;}
+
+  input,select,textarea{
+    width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
+    border-radius:10px; padding:12px; font-size:15px; font-family:inherit; outline:none;
+  }
+  input:focus,select,textarea:focus{border-color:var(--accent);}
+  textarea{resize:vertical; min-height:64px;}
+  .field{margin-bottom:11px;}
+  .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px; font-weight:600;}
+  .hint{font-size:12px; color:var(--muted); line-height:1.5;}
+  a{color:#5eead4;}
+
+  /* Progress */
+  #progress{display:none; margin-top:10px;}
+  .bar{height:10px; background:var(--panel2); border-radius:6px; overflow:hidden; margin-top:8px;}
+  .bar > i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--gold)); transition:width .25s;}
+  #progText{font-size:13px; color:var(--muted); margin-top:8px;}
+  .log{margin-top:10px; max-height:190px; overflow:auto; font-size:12.5px; line-height:1.6;}
+  .log div{padding:4px 0; border-bottom:1px solid var(--line); display:flex; gap:7px; align-items:flex-start;}
+  .dot{flex:none; width:8px; height:8px; border-radius:50%; margin-top:6px;}
+  .dot.ok{background:var(--ok);} .dot.err{background:var(--bad);} .dot.run{background:var(--gold);}
+
+  /* Search / filter */
+  .toolbar{display:flex; gap:8px; margin-bottom:12px;}
+  .toolbar input{flex:1;}
+  .toolbar select{width:auto; flex:none; max-width:46%;}
+
+  /* Entry list */
+  .entry{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:12px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start;
+  }
+  .entry .thumb{
+    flex:none; width:58px; height:58px; border-radius:10px; overflow:hidden; background:var(--panel2);
+    display:flex; align-items:center; justify-content:center; font-size:22px; color:var(--muted);
+  }
+  .entry .thumb img{width:100%; height:100%; object-fit:cover;}
+  .entry .info{flex:1; min-width:0;}
+  .entry .nm{font-size:15px; font-weight:700; margin-bottom:2px; word-break:break-word;}
+  .entry .co{font-size:13px; color:var(--muted); word-break:break-word;}
+  .entry .meta{margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{font-size:11px; background:var(--panel2); border:1px solid var(--line); color:var(--text); border-radius:20px; padding:3px 9px;}
+  .chip.cat{background:rgba(13,148,136,.18); border-color:var(--accent); color:#5eead4;}
+  .chip.tel{background:rgba(251,191,36,.14); border-color:#a16207; color:var(--gold);}
+  .entry .acts{display:flex; flex-direction:column; gap:6px; flex:none;}
+  .iconbtn{border:1px solid var(--line); background:var(--panel2); color:var(--text); border-radius:9px; width:38px; height:34px; font-size:15px; cursor:pointer;}
+
+  .empty{text-align:center; color:var(--muted); padding:50px 20px; font-size:14px; line-height:1.7;}
+  .empty .big{font-size:40px; margin-bottom:10px;}
+
+  /* Bottom nav */
+  nav{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background:var(--panel); border-top:1px solid var(--line);
+    display:flex; padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav button{
+    flex:1; background:transparent; border:none; color:var(--muted); cursor:pointer;
+    padding:8px 4px; border-radius:10px; font-size:11px; font-weight:600;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+  }
+  nav button .ic{font-size:20px;}
+  nav button.active{color:#5eead4;}
+
+  /* Modal */
+  .overlay{
+    position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6);
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.show{display:flex;}
+  .sheet{
+    background:var(--panel); width:100%; max-width:560px; max-height:92vh; overflow:auto;
+    border-radius:18px 18px 0 0; padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+    border:1px solid var(--line); border-bottom:none;
+  }
+  .sheet h3{font-size:16px; margin-bottom:14px; display:flex; align-items:center;}
+  .sheet .x{margin-left:auto; background:var(--panel2); border:1px solid var(--line); color:var(--text); width:34px; height:34px; border-radius:9px; font-size:18px; cursor:pointer;}
+  .modal-img{width:100%; border-radius:10px; margin-bottom:12px; border:1px solid var(--line);}
+  .two{display:flex; gap:10px;}
+  .two > div{flex:1;}
+  .toggle-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 0;}
+  .switch{position:relative; width:50px; height:29px; flex:none;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:var(--panel2); border:1px solid var(--line); border-radius:30px; transition:.2s; cursor:pointer;}
+  .slider:before{content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
+  .switch input:checked + .slider{background:var(--accent);}
+  .switch input:checked + .slider:before{transform:translateX(21px);}
+
+  /* Toast */
+  #toast{
+    position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px);
+    background:#0b1220; border:1px solid var(--line); color:var(--text);
+    padding:11px 18px; border-radius:12px; font-size:13.5px; z-index:60; opacity:0;
+    transition:.25s; pointer-events:none; max-width:90%; text-align:center; box-shadow:0 6px 20px rgba(0,0,0,.5);
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .spin{width:15px; height:15px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; display:inline-block; animation:sp .7s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🪪 Visiting Card Scanner <span class="count-badge" id="hdrCount">0</span></h1>
+  <p>Card ke photo/PDF se data — Excel me export</p>
+</header>
+
+<!-- ============ SCAN ============ -->
+<section id="scan" class="active">
+  <div class="card">
+    <div class="lbl">📇 Naye card add karo</div>
+    <div class="hint" style="margin-bottom:12px">
+      Ek badi <b>PDF me bahut saare card</b> daal sakte ho, ya seedha photos. App har card ka data alag nikaal dega.
+      Neeche batao ek card ke kitne page/photo hain.
+    </div>
+
+    <div class="toggle-row" style="margin-bottom:10px">
+      <div>
+        <div style="font-weight:600; font-size:14px">Har card ke 2 side (aage + piche)?</div>
+        <div class="hint">ON: har <b>2 page/photo</b> = 1 card (aage+piche). OFF: har <b>1 page/photo</b> = 1 card (sirf aage).</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="pairToggle"><span class="slider"></span></label>
+    </div>
+
+    <input type="file" id="filePick" accept="image/*,application/pdf,.pdf" multiple hidden>
+    <input type="file" id="camPick" accept="image/*" capture="environment" multiple hidden>
+    <div class="btn-row" style="margin-bottom:10px">
+      <button class="btn" id="btnPick">📁 File / Photo</button>
+      <button class="btn sec" id="btnCam">📷 Camera</button>
+    </div>
+
+    <div id="progress">
+      <div class="bar"><i id="progBar"></i></div>
+      <div id="progText">Ready</div>
+      <button class="btn danger small" id="btnStop" style="margin-top:10px; display:none">⏹ Rok do</button>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">✅ Bilkul free</div>
+    <div class="hint">Ye app aapke phone me hi card padhta hai — <b>koi kharcha nahi</b>, koi login nahi. Pehli baar OCR engine (~11MB) download hota hai, phir offline bhi chalta hai.</div>
+  </div>
+</section>
+
+<!-- ============ DATA ============ -->
+<section id="data">
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="🔍 Naam / company / phone dhundo">
+    <select id="catFilter"><option value="">Sab category</option></select>
+  </div>
+  <div id="list"></div>
+</section>
+
+<!-- ============ EXPORT ============ -->
+<section id="export">
+  <div class="card">
+    <div class="lbl">📤 Data export</div>
+    <div class="hint" style="margin-bottom:12px">Saare cards ek file me. Excel me har field alag column me aayega.</div>
+    <button class="btn" id="btnXlsx" style="margin-bottom:10px">📊 Excel (.xlsx) download</button>
+    <button class="btn sec small" id="btnCsv">📄 CSV download</button>
+  </div>
+  <div class="card">
+    <div class="lbl">💾 Backup / Restore</div>
+    <div class="hint" style="margin-bottom:12px">Backup file me photo + saara data hota hai. Naye phone pe restore kar sakte ho.</div>
+    <button class="btn sec" id="btnBackup" style="margin-bottom:10px">⬇️ Backup (.json)</button>
+    <button class="btn sec" id="btnRestore">⬆️ Restore</button>
+    <input type="file" id="restorePick" accept=".json,application/json" hidden>
+  </div>
+  <div class="card">
+    <div class="lbl" style="color:#fca5a5">⚠️ Danger zone</div>
+    <button class="btn danger" id="btnClear">🗑️ Saare cards delete karo</button>
+  </div>
+</section>
+
+<!-- ============ SETTINGS ============ -->
+<section id="settings">
+  <div class="card">
+    <div class="lbl">🌐 Card ki language</div>
+    <div class="hint" style="margin-bottom:10px">English hamesha ON rehta hai. Gujarati/Hindi tabhi ON karo jab card us script me ho — zyada language se scan <b>dheema</b> ho jaata hai.</div>
+    <div class="toggle-row">
+      <div style="font-weight:600; font-size:14px">English</div>
+      <label class="switch"><input type="checkbox" checked disabled><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div style="font-weight:600; font-size:14px">ગુજરાતી (Gujarati)</div>
+      <label class="switch"><input type="checkbox" id="langGuj"><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div style="font-weight:600; font-size:14px">हिन्दी (Hindi)</div>
+      <label class="switch"><input type="checkbox" id="langHin"><span class="slider"></span></label>
+    </div>
+    <div class="hint" style="margin-top:8px; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:9px">
+      💡 Free OCR English cards pe <b>sabse accurate</b> hai. Gujarati/Hindi thoda kam accurate — thoda haath se sudhaarna pad sakta hai.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">🖼️ Card photo save karein?</div>
+    <div class="toggle-row">
+      <div class="hint" style="flex:1">On rakho to har card ke saath uski chhoti photo bhi save hoti hai (reference ke liye). Off = kam storage.</div>
+      <label class="switch"><input type="checkbox" id="storeImg" checked><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">ℹ️ App</div>
+    <div class="hint">Visiting Card Scanner • 100% free • on-device OCR (Tesseract) • offline PWA • data sirf aapke phone me. <br>Version 2.0</div>
+  </div>
+</section>
+
+<!-- Bottom nav -->
+<nav>
+  <button data-tab="scan" class="active"><span class="ic">📷</span>Scan</button>
+  <button data-tab="data"><span class="ic">📋</span>Cards</button>
+  <button data-tab="export"><span class="ic">📤</span>Export</button>
+  <button data-tab="settings"><span class="ic">⚙️</span>Settings</button>
+</nav>
+
+<!-- Edit modal -->
+<div class="overlay" id="editOverlay">
+  <div class="sheet">
+    <h3>✏️ Card edit <button class="x" id="editClose">✕</button></h3>
+    <img id="editImg" class="modal-img" style="display:none">
+    <input type="hidden" id="f_id">
+    <div class="field"><label>Naam</label><input id="f_name"></div>
+    <div class="two">
+      <div class="field"><label>Designation</label><input id="f_designation"></div>
+      <div class="field"><label>Category</label>
+        <select id="f_category"></select>
+      </div>
+    </div>
+    <div class="field"><label>Company / Firm</label><input id="f_company"></div>
+    <div class="field"><label>Specialization / kaam</label><input id="f_specialization"></div>
+    <div class="field"><label>Phone / Mobile</label><input id="f_phone" placeholder="comma se alag"></div>
+    <div class="two">
+      <div class="field"><label>Email</label><input id="f_email"></div>
+      <div class="field"><label>Website</label><input id="f_website"></div>
+    </div>
+    <div class="field"><label>Address</label><textarea id="f_address"></textarea></div>
+    <div class="two">
+      <div class="field"><label>City</label><input id="f_city"></div>
+      <div class="field"><label>Pincode</label><input id="f_pincode"></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>📅 Call Day (pen note)</label><input id="f_callDay" placeholder="e.g. Mon, Wed, Fri"></div>
+      <div class="field"><label>⏰ Call Timing (pen note)</label><input id="f_callTime" placeholder="e.g. 11-1"></div>
+    </div>
+    <div class="field"><label>Native text (Gujarati/Hindi)</label><input id="f_nativeText"></div>
+    <div class="field"><label>Notes</label><textarea id="f_notes"></textarea></div>
+    <div class="field"><label>📄 Poora scan text (reference — yahaan se copy kar sakte ho)</label><textarea id="f_rawText" rows="4" style="font-size:13px; color:var(--muted)"></textarea></div>
+    <div class="btn-row">
+      <button class="btn danger small" id="editDelete">🗑️ Delete</button>
+      <button class="btn small" id="editSave">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="./vendor/xlsx.min.js"></script>
+<script src="./vendor/pdf.min.js"></script>
+<script src="./vendor/tesseract/tesseract.min.js"></script>
+<script>
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js';
+
+/* ---------------- IndexedDB ---------------- */
+const DB = (() => {
+  const NAME='visiting-cards', VERSION=1, STORES=['cards','meta'];
+  let dbp=null;
+  function open(){
+    if(dbp) return dbp;
+    dbp=new Promise((res,rej)=>{
+      const r=indexedDB.open(NAME,VERSION);
+      r.onupgradeneeded=(e)=>{
+        const db=e.target.result;
+        if(!db.objectStoreNames.contains('cards')) db.createObjectStore('cards',{keyPath:'id',autoIncrement:true});
+        if(!db.objectStoreNames.contains('meta')) db.createObjectStore('meta',{keyPath:'key'});
+      };
+      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+    });
+    return dbp;
+  }
+  async function tx(store,mode='readonly'){ return (await open()).transaction(store,mode).objectStore(store); }
+  function reqP(r){ return new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+  return {
+    async getAll(s){ return reqP((await tx(s)).getAll()); },
+    async add(s,row){ return reqP((await tx(s,'readwrite')).add(row)); },
+    async put(s,row){ return reqP((await tx(s,'readwrite')).put(row)); },
+    async del(s,id){ return reqP((await tx(s,'readwrite')).delete(id)); },
+    async clear(s){ return reqP((await tx(s,'readwrite')).clear()); },
+    async getMeta(k,d=null){ const r=await reqP((await tx('meta')).get(k)); return r?r.value:d; },
+    async setMeta(k,v){ return reqP((await tx('meta','readwrite')).put({key:k,value:v})); },
+  };
+})();
+
+/* ---------------- State ---------------- */
+const CATEGORIES=['Doctor','Pharma Distributor','Physiotherapist','Medical / Chemist','Purchaser','Hospital','Other'];
+let settings={ storeImages:true, langGuj:false, langHin:false };
+let cards=[];
+let stopFlag=false;
+
+/* ---------------- Helpers ---------------- */
+const $=s=>document.querySelector(s);
+function toast(msg,ms=2600){ const t=$('#toast'); t.innerHTML=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),ms); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function showTab(id){
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('active',s.id===id));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+  if(id==='data') renderList();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+/* ---------------- Image utils ---------------- */
+function fileToImage(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{ URL.revokeObjectURL(url); res(img); };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('Image load fail')); };
+    img.src=url;
+  });
+}
+function drawScaled(source,sw,sh,maxDim,q){
+  const scale=Math.min(1, maxDim/Math.max(sw,sh));
+  const w=Math.round(sw*scale), h=Math.round(sh*scale);
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
+  ctx.drawImage(source,0,0,w,h);
+  return c.toDataURL('image/jpeg',q);
+}
+async function imageFileToSide(file){
+  const img=await fileToImage(file);
+  const full=drawScaled(img,img.naturalWidth,img.naturalHeight,1600,0.85);
+  const thumb=drawScaled(img,img.naturalWidth,img.naturalHeight,700,0.6);
+  return { b64: full.split(',')[1], thumb };
+}
+async function pdfToSides(file,onPage){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  const sides=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    if(onPage) onPage(p,pdf.numPages);
+    const page=await pdf.getPage(p);
+    let vp=page.getViewport({scale:1});
+    const scale=Math.min(3, 1600/Math.max(vp.width,vp.height));
+    vp=page.getViewport({scale});
+    const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    const full=c.toDataURL('image/jpeg',0.85);
+    const thumb=drawScaled(c,c.width,c.height,700,0.6);
+    sides.push({ b64: full.split(',')[1], thumb });
+    page.cleanup();
+  }
+  return sides;
+}
+function chunk(arr,n){ const out=[]; for(let i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n)); return out; }
+
+/* ---------------- Build jobs from files ----------------
+   sidesPerCard = 1 (front only) or 2 (front + back).
+   A PDF's pages are split into cards of `sidesPerCard` pages each.
+   Loose images are grouped the same way, in the order picked. */
+async function filesToJobs(fileList,sidesPerCard,onPrep){
+  const files=[...fileList];
+  const jobs=[]; let imgPending=[];
+  const flushImgs=()=>{ if(imgPending.length){ chunk(imgPending,sidesPerCard).forEach(g=>jobs.push({sides:g,label:'Photo card'})); imgPending=[]; } };
+  for(const f of files){
+    const isPdf = f.type==='application/pdf' || /\.pdf$/i.test(f.name);
+    if(isPdf){
+      flushImgs();
+      const sides=await pdfToSides(f,(p,n)=>onPrep&&onPrep(`PDF "${f.name}" — page ${p}/${n}`));
+      chunk(sides,sidesPerCard).forEach(g=>jobs.push({sides:g,label:f.name}));
+    } else if(f.type.startsWith('image/')||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)){
+      if(onPrep) onPrep('Photo taiyaar…');
+      imgPending.push(await imageFileToSide(f));
+    }
+  }
+  flushImgs();
+  return jobs;
+}
+
+/* ---------------- OCR (free, on-device via Tesseract) ---------------- */
+let ocrWorker=null, ocrWorkerLangs='';
+function activeLangs(){
+  let l=['eng'];
+  if(settings.langGuj) l.push('guj');
+  if(settings.langHin) l.push('hin');
+  return l.join('+');
+}
+async function getWorker(onProgress){
+  const langs=activeLangs();
+  if(ocrWorker && ocrWorkerLangs===langs) return ocrWorker;
+  if(ocrWorker){ try{ await ocrWorker.terminate(); }catch(e){} ocrWorker=null; }
+  const B=new URL('./vendor/tesseract/',location.href).href;
+  const worker=await Tesseract.createWorker(langs,1,{
+    workerPath:B+'worker.min.js',
+    corePath:B,
+    langPath:B+'tessdata',
+    gzip:true,
+    logger:m=>{ if(onProgress && m.status==='recognizing text') onProgress(m.progress); }
+  });
+  ocrWorker=worker; ocrWorkerLangs=langs;
+  return worker;
+}
+function rotateJpeg(b64,deg){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      if(deg===90||deg===270){ c.width=img.height; c.height=img.width; } else { c.width=img.width; c.height=img.height; }
+      const x=c.getContext('2d');
+      x.translate(c.width/2,c.height/2); x.rotate(deg*Math.PI/180);
+      x.drawImage(img,-img.width/2,-img.height/2);
+      res(c.toDataURL('image/jpeg',0.92));
+    };
+    img.onerror=()=>rej(new Error('rotate fail'));
+    img.src='data:image/jpeg;base64,'+b64;
+  });
+}
+// Photos of cards are often sideways — try 0/90/270/180 and keep the
+// orientation Tesseract is most confident about (early-exit when good).
+async function recognizeBest(worker,b64,onProgress){
+  let best={conf:-1,text:''};
+  for(const a of [0,90,270,180]){
+    const url = a===0 ? 'data:image/jpeg;base64,'+b64 : await rotateJpeg(b64,a);
+    const { data }=await worker.recognize(url);
+    const conf=data.confidence||0;
+    if(conf>best.conf) best={conf,text:data.text||''};
+    if(conf>=72) break;
+  }
+  return best.text;
+}
+async function ocrCard(sides,onProgress){
+  const worker=await getWorker(onProgress);
+  let text='';
+  for(const s of sides){
+    const t=await recognizeBest(worker,s.b64,onProgress);
+    text += (text?'\n':'') + t;
+  }
+  return parseOCR(text);
+}
+function parseOCR(text){
+  const rawText=(text||'').trim();
+  const lines=rawText.split('\n').map(l=>l.trim()).filter(Boolean);
+  const flat=rawText.replace(/[|]/g,' ').replace(/\s+/g,' ');
+  const email=(flat.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)||[''])[0];
+  const emailDom=(email.split('@')[1]||'').toLowerCase();
+  const isMailProv=d=>/^(gmail|yahoo|hotmail|outlook|rediffmail|ymail|live|icloud|mail)\./.test(d);
+  let website='';
+  const wwwM=flat.match(/\b(?:https?:\/\/)?www\.[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?:\/\S*)?/i);
+  if(wwwM) website=wwwM[0];
+  else { const doms=flat.match(/\b[A-Za-z0-9-]+\.(?:com|in|net|org|co\.in)\b/ig)||[];
+    website=doms.find(d=>{const dl=d.toLowerCase(); return dl!==emailDom && !isMailProv(dl);})||''; }
+  const rawPhones=flat.match(/(?:\+?91[\s-]?)?(?:\(?0?\d{2,4}\)?[\s-]?)?\d{3,5}[\s-]?\d{3,5}/g)||[];
+  const phones=[...new Set(rawPhones.map(p=>p.replace(/[^\d+]/g,'')).filter(p=>{const d=p.replace(/\D/g,''); return d.length>=10 && d.length<=12;}))];
+  const pincode=(flat.match(/\b[1-9]\d{5}\b/)||[''])[0];
+  const low=flat.toLowerCase();
+  let category='Other';
+  if(/physio/.test(low)) category='Physiotherapist';
+  else if(/hospital|nursing home/.test(low)) category='Hospital';
+  else if(/chemist|medical store|pharmacy|medico|druggist|drug house/.test(low)) category='Medical / Chemist';
+  else if(/distributor|agenc|enterprise|traders|marketing|pharma\b|pharmaceutical/.test(low)) category='Pharma Distributor';
+  else if(/purchase|procurement|purchasing/.test(low)) category='Purchaser';
+  else if(/\bdr\.?\b|doctor|m\.?b\.?b\.?s|\bm\.?d\b|\bm\.?s\b|clinic|physician|surgeon/.test(low)) category='Doctor';
+  const drLine=lines.find(l=>/\bdr\.?\b/i.test(l));
+  const name=drLine||lines.find(l=>/^[A-Za-z .,'&-]{3,}$/.test(l) && !/@|www|\.com/i.test(l))||lines[0]||'';
+  const company=lines.find(l=>/clinic|hospital|pharma|medical|chemist|distributor|agenc|enterprise|traders|marketing|labs?|healthcare|surgical|medico|nursing/i.test(l))||'';
+  const address=lines.filter(l=>/road|rd\.|nagar|society|marg|street|\bst\b|plot|shop|floor|opp|near|complex|market|chowk|cross|lane|gali|bazar|nr\.|b\/h|behind/i.test(l)).join(', ');
+  const nativeText=lines.filter(l=>/[઀-૿ऀ-ॿ]/.test(l)).join(' ');
+  const call=parseCall(rawText);
+  return { name, designation:'', company, category, specialization:'', phone:phones.join(', '), email, website, address, city:'', pincode, nativeText, notes:'', callDay:call.day, callTime:call.time, rawText };
+}
+/* Best-effort: pen-written call day (M/T/W/Th/F/S or Mon/Tue...) + timing.
+   Handwriting OCR is weak, so treat as a guess — user confirms in edit. */
+function parseCall(text){
+  const flat=(text||'').replace(/\s+/g,' ');
+  const lines=(text||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  const DAYIDX={Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:7};
+  let days=[];
+  const add=d=>{ if(d && !days.includes(d)) days.push(d); };
+  // full/abbrev day words anywhere
+  (flat.match(/\b(mon(?:day)?|tue(?:s|sday)?|wed(?:nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b/ig)||[]).forEach(w=>{
+    const k=w.toLowerCase();
+    if(k.startsWith('mon'))add('Mon'); else if(k.startsWith('tue'))add('Tue');
+    else if(k.startsWith('wed'))add('Wed'); else if(k.startsWith('thu'))add('Thu');
+    else if(k.startsWith('fri'))add('Fri'); else if(k.startsWith('sat'))add('Sat');
+    else if(k.startsWith('sun'))add('Sun');
+  });
+  // short single-letter sequence e.g. "M T W Th F" / "M/W/F" / "M,W,F,S"
+  if(!days.length){
+    const seq=flat.match(/\b(?:Th|[MTWFS])(?:\s*[,\/.\-]?\s*(?:Th|[MTWFS])){1,6}\b/);
+    if(seq){
+      (seq[0].match(/Th|[MTWFS]/g)||[]).forEach(t=>{
+        add({M:'Mon',T:'Tue',W:'Wed',Th:'Thu',F:'Fri',S:'Sat'}[t]);
+      });
+    }
+  }
+  days.sort((a,b)=>DAYIDX[a]-DAYIDX[b]);
+  // timing: prefer a printed "Timing(s):" line (captures morning+evening);
+  // else first time-range found anywhere.
+  let time='';
+  const tline=lines.find(l=>/timings?\s*[:\-]/i.test(l));
+  if(tline) time=tline.replace(/^.*?timings?\s*[:\-]\s*/i,'').trim();
+  if(!time){
+    const ranges=flat.match(/\b\d{1,2}(?::\.?\d{2})?\s*(?:am|pm|noon)?\s*(?:-|–|to)\s*\d{1,2}(?::\.?\d{2})?\s*(?:am|pm|noon)?\b/ig)||[];
+    time=ranges.slice(0,2).map(t=>t.replace(/\s+/g,' ').trim()).join(', ');
+  }
+  return { day: days.join(', '), time };
+}
+
+/* ---------------- Scan flow ---------------- */
+function logLine(cls,html){
+  const d=document.createElement('div');
+  d.innerHTML=`<span class="dot ${cls}"></span><span>${html}</span>`;
+  $('#log').prepend(d);
+}
+async function runScan(fileList){
+  if(!fileList||!fileList.length) return;
+  if(!window.Tesseract){ toast('❌ OCR engine load nahi hua — page refresh karo'); return; }
+  stopFlag=false;
+  $('#progress').style.display='block';
+  $('#log').innerHTML='';
+  $('#btnStop').style.display='block';
+  $('#btnPick').disabled=$('#btnCam').disabled=true;
+  $('#progText').innerHTML='<span class="spin"></span> Files taiyaar ho rahi hain…';
+  $('#progBar').style.width='2%';
+
+  let jobs;
+  try{ jobs=await filesToJobs(fileList, $('#pairToggle').checked?2:1, msg=>{ $('#progText').innerHTML='<span class="spin"></span> '+esc(msg); }); }
+  catch(e){ toast('❌ File padhne me dikkat: '+e.message); resetScanUI(); return; }
+  if(!jobs.length){ toast('Koi valid image/PDF nahi mila'); resetScanUI(); return; }
+
+  logLine('run',`${jobs.length} card mile — OCR engine start ho raha hai (pehli baar thoda time lagta hai)…`);
+
+  let done=0, ok=0, fail=0;
+  for(let i=0;i<jobs.length;i++){
+    if(stopFlag){ logLine('err','⏹ Roka gaya'); break; }
+    const job=jobs[i];
+    logLine('run',`Card ${i+1} padha ja raha hai …`);
+    try{
+      const rec=await ocrCard(job.sides,(pr)=>{
+        $('#progText').innerHTML=`<span class="spin"></span> Card ${i+1} / ${jobs.length} — ${Math.round(pr*100)}%`;
+      });
+      rec.thumb = settings.storeImages ? job.sides[0].thumb : '';
+      rec.createdAt=Date.now();
+      const id=await DB.add('cards',rec);
+      rec.id=id; cards.push(rec);
+      ok++;
+      $('#log').firstChild.querySelector('.dot').className='dot ok';
+      $('#log').firstChild.querySelector('span:last-child').innerHTML=
+        `✅ <b>${esc(rec.name||'(naam check karo)')}</b> ${rec.phone?'· 📞 '+esc(rec.phone.split(',')[0]):''} <span class="chip cat">${esc(rec.category)}</span>`;
+    }catch(e){
+      fail++;
+      $('#log').firstChild.querySelector('.dot').className='dot err';
+      $('#log').firstChild.querySelector('span:last-child').innerHTML=`❌ Card ${i+1}: ${esc(e.message)}`;
+    }
+    done++;
+    $('#progBar').style.width=Math.round((done/jobs.length)*100)+'%';
+    updateCount();
+  }
+  $('#progText').innerHTML=`✅ Ho gaya — ${ok} card add, ${fail} fail (kul ${jobs.length}). Ab "Cards" me check/edit karo.`;
+  resetScanUI(true);
+  updateCount();
+  if(ok) toast(`✅ ${ok} card add ho gaye`);
+}
+function resetScanUI(keepText){
+  $('#btnStop').style.display='none';
+  $('#btnPick').disabled=$('#btnCam').disabled=false;
+  if(!keepText) $('#progText').textContent='Ready';
+}
+
+/* ---------------- Render list ---------------- */
+function updateCount(){ $('#hdrCount').textContent=cards.length; }
+function renderCatFilter(){
+  const sel=$('#catFilter'); const cur=sel.value;
+  sel.innerHTML='<option value="">Sab category</option>'+CATEGORIES.map(c=>`<option>${c}</option>`).join('');
+  sel.value=cur;
+}
+function renderList(){
+  const q=($('#search').value||'').toLowerCase().trim();
+  const cat=$('#catFilter').value;
+  const list=$('#list');
+  let rows=cards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(cat) rows=rows.filter(r=>r.category===cat);
+  if(q) rows=rows.filter(r=>[r.name,r.company,r.phone,r.city,r.email,r.nativeText,r.specialization].join(' ').toLowerCase().includes(q));
+  if(!rows.length){
+    list.innerHTML=`<div class="empty"><div class="big">🪪</div>${cards.length?'Kuch match nahi hua.':'Abhi koi card nahi.<br>“Scan” me ja ke card add karo.'}</div>`;
+    return;
+  }
+  list.innerHTML=rows.map(r=>`
+    <div class="entry" data-id="${r.id}">
+      <div class="thumb">${r.thumb?`<img src="${r.thumb}">`:'🪪'}</div>
+      <div class="info">
+        <div class="nm">${esc(r.name||'(no name)')}</div>
+        <div class="co">${esc([r.designation,r.company].filter(Boolean).join(' · ')||'—')}</div>
+        <div class="meta">
+          ${r.category?`<span class="chip cat">${esc(r.category)}</span>`:''}
+          ${r.phone?`<span class="chip tel">📞 ${esc(r.phone.split(',')[0])}</span>`:''}
+          ${(r.callDay||r.callTime)?`<span class="chip">🕑 ${esc([r.callDay,r.callTime].filter(Boolean).join(' '))}</span>`:''}
+          ${r.city?`<span class="chip">📍 ${esc(r.city)}</span>`:''}
+        </div>
+      </div>
+      <div class="acts">
+        <button class="iconbtn" data-act="edit">✏️</button>
+        ${r.phone?`<a class="iconbtn" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="tel:${esc(r.phone.split(',')[0].replace(/\s/g,''))}">📞</a>`:''}
+      </div>
+    </div>`).join('');
+  list.querySelectorAll('.entry').forEach(el=>{
+    const id=+el.dataset.id;
+    el.querySelector('[data-act="edit"]').onclick=()=>openEdit(id);
+    el.querySelector('.info').onclick=()=>openEdit(id);
+    el.querySelector('.thumb').onclick=()=>openEdit(id);
+  });
+}
+$('#search').oninput=renderList;
+$('#catFilter').onchange=renderList;
+
+/* ---------------- Edit modal ---------------- */
+const FIELDS=['name','designation','company','category','specialization','phone','email','website','address','city','pincode','callDay','callTime','nativeText','notes','rawText'];
+function fillCatSelect(){ $('#f_category').innerHTML=CATEGORIES.map(c=>`<option>${c}</option>`).join(''); }
+function openEdit(id){
+  const r=cards.find(c=>c.id===id); if(!r) return;
+  $('#f_id').value=id;
+  FIELDS.forEach(f=>{ const el=$('#f_'+f); if(el) el.value=r[f]||''; });
+  const img=$('#editImg');
+  if(r.thumb){ img.src=r.thumb; img.style.display='block'; } else img.style.display='none';
+  $('#editOverlay').classList.add('show');
+}
+function closeEdit(){ $('#editOverlay').classList.remove('show'); }
+$('#editClose').onclick=closeEdit;
+$('#editOverlay').onclick=e=>{ if(e.target.id==='editOverlay') closeEdit(); };
+$('#editSave').onclick=async()=>{
+  const id=+$('#f_id').value; const r=cards.find(c=>c.id===id); if(!r) return;
+  FIELDS.forEach(f=>{ const el=$('#f_'+f); if(el) r[f]=el.value.trim(); });
+  await DB.put('cards',r);
+  closeEdit(); renderList(); toast('💾 Save ho gaya');
+};
+$('#editDelete').onclick=async()=>{
+  const id=+$('#f_id').value;
+  if(!confirm('Ye card delete karein?')) return;
+  await DB.del('cards',id);
+  cards=cards.filter(c=>c.id!==id);
+  closeEdit(); renderList(); updateCount(); toast('🗑️ Delete ho gaya');
+};
+
+/* ---------------- Export ---------------- */
+const XLSX_COLS=[
+  ['name','Name'],['designation','Designation'],['company','Company'],['category','Category'],
+  ['specialization','Specialization'],['phone','Phone'],['email','Email'],['website','Website'],
+  ['address','Address'],['city','City'],['pincode','Pincode'],
+  ['callDay','Call Day'],['callTime','Call Timing'],
+  ['nativeText','Native Text'],['notes','Notes']
+];
+function rowsForExport(){
+  return cards.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map((r,i)=>{
+    const o={'No':i+1};
+    XLSX_COLS.forEach(([k,h])=>o[h]=r[k]||'');
+    o['Added On']=r.createdAt?new Date(r.createdAt).toLocaleDateString():'';
+    return o;
+  });
+}
+$('#btnXlsx').onclick=()=>{
+  if(!cards.length){ toast('Koi card nahi'); return; }
+  const ws=XLSX.utils.json_to_sheet(rowsForExport());
+  ws['!cols']=[{wch:5},{wch:22},{wch:14},{wch:24},{wch:16},{wch:18},{wch:22},{wch:22},{wch:22},{wch:30},{wch:14},{wch:10},{wch:20},{wch:24},{wch:12}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Cards');
+  XLSX.writeFile(wb,`visiting-cards-${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('📊 Excel download');
+};
+$('#btnCsv').onclick=()=>{
+  if(!cards.length){ toast('Koi card nahi'); return; }
+  const ws=XLSX.utils.json_to_sheet(rowsForExport());
+  const csv=XLSX.utils.sheet_to_csv(ws);
+  downloadBlob(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}),`visiting-cards-${new Date().toISOString().slice(0,10)}.csv`);
+  toast('📄 CSV download');
+};
+function downloadBlob(blob,name){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$('#btnBackup').onclick=async()=>{
+  const bundle={app:'visiting-cards',version:1,exported:new Date().toISOString(),cards};
+  downloadBlob(new Blob([JSON.stringify(bundle)],{type:'application/json'}),`cards-backup-${new Date().toISOString().slice(0,10)}.json`);
+  toast('⬇️ Backup ban gaya');
+};
+$('#btnRestore').onclick=()=>$('#restorePick').click();
+$('#restorePick').onchange=async(e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    const b=JSON.parse(await f.text());
+    const inc=b.cards||[];
+    if(!Array.isArray(inc)) throw new Error('galat file');
+    if(!confirm(`${inc.length} card restore karein? (abhi ke ${cards.length} card ke saath add honge)`)){ e.target.value=''; return; }
+    for(const c of inc){ const {id,...rest}=c; const nid=await DB.add('cards',rest); rest.id=nid; cards.push(rest); }
+    renderList(); updateCount(); toast(`⬆️ ${inc.length} card restore ho gaye`);
+  }catch(err){ toast('❌ Restore fail: '+err.message); }
+  e.target.value='';
+};
+$('#btnClear').onclick=async()=>{
+  if(!cards.length){ toast('Kuch hai hi nahi'); return; }
+  if(!confirm(`Pakka? Saare ${cards.length} card delete ho jaayenge. Pehle Backup le lo!`)) return;
+  await DB.clear('cards'); cards=[]; renderList(); updateCount(); toast('🗑️ Sab delete');
+};
+
+/* ---------------- Settings ---------------- */
+async function loadSettings(){
+  settings.storeImages=await DB.getMeta('storeImages',true);
+  settings.langGuj=await DB.getMeta('langGuj',false);
+  settings.langHin=await DB.getMeta('langHin',false);
+  $('#storeImg').checked=settings.storeImages;
+  $('#langGuj').checked=settings.langGuj;
+  $('#langHin').checked=settings.langHin;
+}
+$('#storeImg').onchange=async()=>{ settings.storeImages=$('#storeImg').checked; await DB.setMeta('storeImages',settings.storeImages); };
+$('#langGuj').onchange=async()=>{ settings.langGuj=$('#langGuj').checked; await DB.setMeta('langGuj',settings.langGuj); toast('🌐 Language change — agla scan naye engine se'); };
+$('#langHin').onchange=async()=>{ settings.langHin=$('#langHin').checked; await DB.setMeta('langHin',settings.langHin); toast('🌐 Language change — agla scan naye engine se'); };
+
+/* ---------------- File pickers ---------------- */
+$('#btnPick').onclick=()=>$('#filePick').click();
+$('#btnCam').onclick=()=>$('#camPick').click();
+$('#filePick').onchange=e=>{ const f=e.target.files; e.target.value=''; runScan(f); };
+$('#camPick').onchange=e=>{ const f=e.target.files; e.target.value=''; runScan(f); };
+$('#btnStop').onclick=()=>{ stopFlag=true; toast('⏹ Rok raha hoon…'); };
+
+/* ---------------- Init ---------------- */
+(async function init(){
+  fillCatSelect(); renderCatFilter();
+  await loadSettings();
+  cards=await DB.getAll('cards');
+  updateCount(); renderList();
+  if('serviceWorker' in navigator){ try{ await navigator.serviceWorker.register('./sw.js'); }catch(e){} }
+})();
+</script>
+</body>
+</html>
