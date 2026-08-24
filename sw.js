@@ -1,6 +1,6 @@
 // Visiting Card Scanner PWA - offline cache
 // Bump CACHE when any cached file changes to force refresh.
-const CACHE = 'visiting-cards-v2';
+const CACHE = 'visiting-cards-v3';
 const ASSETS = [
   './', './index.html', './manifest.json', './icon.svg',
   './vendor/xlsx.min.js', './vendor/pdf.min.js', './vendor/pdf.worker.min.js',
