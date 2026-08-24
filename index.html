@@ -41,11 +41,11 @@
   }
   .hd{display:flex; align-items:center; gap:12px;}
   .hd .logo{
-    flex:none; width:42px; height:42px; border-radius:12px;
-    background:linear-gradient(135deg,var(--accent),#2dd4bf); color:#04201d;
-    display:flex; align-items:center; justify-content:center; font-size:22px;
+    flex:none; width:44px; height:44px; border-radius:12px; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
     box-shadow:0 4px 14px rgba(20,184,166,.4);
   }
+  .hd .logo img{width:100%; height:100%; object-fit:cover; display:block;}
   header h1{font-size:18px; font-weight:800; letter-spacing:-.2px;}
   header p{margin:2px 0 0; font-size:12px; color:var(--muted);}
   .count-badge{margin-left:auto; background:rgba(20,184,166,.16); border:1px solid var(--accent2); color:#5eead4; border-radius:20px; padding:5px 12px; font-size:13px; font-weight:800;}
@@ -196,10 +196,10 @@
 
 <header>
   <div class="hd">
-    <div class="logo">🪪</div>
+    <div class="logo"><img src="./icon.svg" alt="logo"></div>
     <div>
       <h1>Card Scanner</h1>
-      <p>Photo/PDF se data → Excel</p>
+      <p>Photo / PDF → data → Excel</p>
     </div>
     <span class="count-badge"><span id="hdrCount">0</span> cards</span>
   </div>
@@ -207,11 +207,19 @@
 
 <!-- ============ SCAN ============ -->
 <section id="scan" class="active">
+  <div class="card" id="installCard" style="display:none; border-color:var(--accent2)">
+    <div style="display:flex; gap:12px; align-items:center; margin-bottom:12px">
+      <div style="font-size:26px">📲</div>
+      <div class="hint" style="flex:1"><b style="color:var(--text)">Install this app</b> on your phone for one-tap access &amp; offline use.</div>
+    </div>
+    <button class="btn" id="btnInstall">⬇️ Install App</button>
+  </div>
+
   <div class="card">
     <div class="drop">
       <div class="ic">📇</div>
-      <div class="t">Naye card add karo</div>
-      <div class="s">Card ki <b>photo</b> khich lo, ya gallery/PDF se chuno.<br>App khud saara data nikaal dega.</div>
+      <div class="t">Add new cards</div>
+      <div class="s">Take a <b>photo</b> of the card, or pick from gallery / PDF.<br>The app reads all the details automatically.</div>
     </div>
 
     <input type="file" id="filePick" accept="image/*,application/pdf,.pdf" multiple hidden>
@@ -223,8 +231,8 @@
 
     <div class="toggle-row" style="border-top:1px solid var(--line); padding-top:12px">
       <div>
-        <div style="font-weight:700; font-size:14px">Aage + piche dono?</div>
-        <div class="hint">ON = har 2 photo/page se 1 card. OFF = har 1 se 1 card.</div>
+        <div style="font-weight:700; font-size:14px">Front + back both?</div>
+        <div class="hint">ON = every 2 photos/pages make 1 card. OFF = every 1 makes 1 card.</div>
       </div>
       <label class="switch"><input type="checkbox" id="pairToggle"><span class="slider"></span></label>
     </div>
@@ -232,14 +240,14 @@
     <div id="progress">
       <div class="bar"><i id="progBar"></i></div>
       <div id="progText">Ready</div>
-      <button class="btn danger small" id="btnStop" style="margin-top:12px; display:none">⏹ Rok do</button>
+      <button class="btn danger small" id="btnStop" style="margin-top:12px; display:none">⏹ Stop</button>
       <div class="log" id="log"></div>
     </div>
   </div>
 
   <div class="card" style="display:flex; gap:12px; align-items:center">
     <div style="font-size:26px">✅</div>
-    <div class="hint" style="flex:1"><b style="color:var(--text)">100% Free.</b> Sab kuch aapke phone me — koi kharcha nahi, koi login nahi. Pehli baar engine (~11MB) download hota hai, phir offline bhi chalta hai.</div>
+    <div class="hint" style="flex:1"><b style="color:var(--text)">100% Free.</b> Everything runs on your phone — no cost, no login. The engine (~11MB) downloads once, then works offline too.</div>
   </div>
 </section>
 
@@ -247,8 +255,8 @@
 <section id="data">
   <div class="stats" id="stats"></div>
   <div class="toolbar">
-    <input type="search" id="search" placeholder="🔍 Naam / company / phone">
-    <select id="catFilter"><option value="">Sab category</option></select>
+    <input type="search" id="search" placeholder="🔍 Name / company / phone">
+    <select id="catFilter"><option value="">All categories</option></select>
   </div>
   <div id="list"></div>
 </section>
@@ -256,29 +264,29 @@
 <!-- ============ EXPORT ============ -->
 <section id="export">
   <div class="card">
-    <div class="lbl">📤 Data export</div>
-    <div class="hint" style="margin-bottom:12px">Saare cards ek file me. Excel me har field alag column me aayega.</div>
-    <button class="btn" id="btnXlsx" style="margin-bottom:10px">📊 Excel (.xlsx) download</button>
-    <button class="btn sec small" id="btnCsv">📄 CSV download</button>
+    <div class="lbl">📤 Export data</div>
+    <div class="hint" style="margin-bottom:12px">All cards in one file. Every field becomes a separate column in Excel.</div>
+    <button class="btn" id="btnXlsx" style="margin-bottom:10px">📊 Download Excel (.xlsx)</button>
+    <button class="btn sec small" id="btnCsv">📄 Download CSV</button>
   </div>
   <div class="card">
     <div class="lbl">💾 Backup / Restore</div>
-    <div class="hint" style="margin-bottom:12px">Backup file me photo + saara data hota hai. Naye phone pe restore kar sakte ho.</div>
+    <div class="hint" style="margin-bottom:12px">The backup file holds photos + all data. You can restore it on a new phone.</div>
     <button class="btn sec" id="btnBackup" style="margin-bottom:10px">⬇️ Backup (.json)</button>
     <button class="btn sec" id="btnRestore">⬆️ Restore</button>
     <input type="file" id="restorePick" accept=".json,application/json" hidden>
   </div>
   <div class="card">
     <div class="lbl" style="color:#fca5a5">⚠️ Danger zone</div>
-    <button class="btn danger" id="btnClear">🗑️ Saare cards delete karo</button>
+    <button class="btn danger" id="btnClear">🗑️ Delete all cards</button>
   </div>
 </section>
 
 <!-- ============ SETTINGS ============ -->
 <section id="settings">
   <div class="card">
-    <div class="lbl">🌐 Card ki language</div>
-    <div class="hint" style="margin-bottom:10px">English hamesha ON rehta hai. Gujarati/Hindi tabhi ON karo jab card us script me ho — zyada language se scan <b>dheema</b> ho jaata hai.</div>
+    <div class="lbl">🌐 Card language</div>
+    <div class="hint" style="margin-bottom:10px">English is always ON. Turn on Gujarati/Hindi only if the card is in that script — more languages make scanning <b>slower</b>.</div>
     <div class="toggle-row">
       <div style="font-weight:600; font-size:14px">English</div>
       <label class="switch"><input type="checkbox" checked disabled><span class="slider"></span></label>
@@ -292,21 +300,28 @@
       <label class="switch"><input type="checkbox" id="langHin"><span class="slider"></span></label>
     </div>
     <div class="hint" style="margin-top:8px; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:9px">
-      💡 Free OCR English cards pe <b>sabse accurate</b> hai. Gujarati/Hindi thoda kam accurate — thoda haath se sudhaarna pad sakta hai.
+      💡 The free OCR is <b>most accurate</b> on English cards. Gujarati/Hindi are less accurate — you may need to fix a few things by hand.
     </div>
   </div>
 
   <div class="card">
-    <div class="lbl">🖼️ Card photo save karein?</div>
+    <div class="lbl">🖼️ Save card photo?</div>
     <div class="toggle-row">
-      <div class="hint" style="flex:1">On rakho to har card ke saath uski chhoti photo bhi save hoti hai (reference ke liye). Off = kam storage.</div>
+      <div class="hint" style="flex:1">When ON, a small photo of each card is saved for reference. OFF = less storage used.</div>
       <label class="switch"><input type="checkbox" id="storeImg" checked><span class="slider"></span></label>
     </div>
   </div>
 
   <div class="card">
-    <div class="lbl">ℹ️ App</div>
-    <div class="hint">Visiting Card Scanner • 100% free • on-device OCR (Tesseract) • offline PWA • data sirf aapke phone me. <br>Version 2.0</div>
+    <div class="lbl">📲 Install</div>
+    <div class="hint" style="margin-bottom:10px">Install the app on your phone/PC for one-tap access and offline use.</div>
+    <button class="btn small" id="btnInstall2">⬇️ Install App</button>
+    <div class="hint" id="iosHint" style="margin-top:10px; display:none">On iPhone (Safari): tap the <b>Share</b> button → <b>Add to Home Screen</b>.</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">ℹ️ About</div>
+    <div class="hint">Visiting Card Scanner • 100% free • on-device OCR (Tesseract) • offline PWA • data stays only on your phone. <br>Version 2.1</div>
   </div>
 </section>
 
@@ -321,10 +336,10 @@
 <!-- Edit modal -->
 <div class="overlay" id="editOverlay">
   <div class="sheet">
-    <h3>✏️ Card edit <button class="x" id="editClose">✕</button></h3>
+    <h3>✏️ Edit card <button class="x" id="editClose">✕</button></h3>
     <img id="editImg" class="modal-img" style="display:none">
     <input type="hidden" id="f_id">
-    <div class="field"><label>Naam</label><input id="f_name"></div>
+    <div class="field"><label>Name</label><input id="f_name"></div>
     <div class="two">
       <div class="field"><label>Designation</label><input id="f_designation"></div>
       <div class="field"><label>Category</label>
@@ -332,8 +347,8 @@
       </div>
     </div>
     <div class="field"><label>Company / Firm</label><input id="f_company"></div>
-    <div class="field"><label>Specialization / kaam</label><input id="f_specialization"></div>
-    <div class="field"><label>Phone / Mobile</label><input id="f_phone" placeholder="comma se alag"></div>
+    <div class="field"><label>Specialization</label><input id="f_specialization"></div>
+    <div class="field"><label>Phone / Mobile</label><input id="f_phone" placeholder="separate with commas"></div>
     <div class="two">
       <div class="field"><label>Email</label><input id="f_email"></div>
       <div class="field"><label>Website</label><input id="f_website"></div>
@@ -349,7 +364,7 @@
     </div>
     <div class="field"><label>Native text (Gujarati/Hindi)</label><input id="f_nativeText"></div>
     <div class="field"><label>Notes</label><textarea id="f_notes"></textarea></div>
-    <div class="field"><label>📄 Poora scan text (reference — yahaan se copy kar sakte ho)</label><textarea id="f_rawText" rows="4" style="font-size:13px; color:var(--muted)"></textarea></div>
+    <div class="field"><label>📄 Full scan text (reference — copy from here)</label><textarea id="f_rawText" rows="4" style="font-size:13px; color:var(--muted)"></textarea></div>
     <div class="btn-row">
       <button class="btn danger small" id="editDelete">🗑️ Delete</button>
       <button class="btn small" id="editSave">💾 Save</button>
@@ -474,7 +489,7 @@ async function filesToJobs(fileList,sidesPerCard,onPrep){
       const sides=await pdfToSides(f,(p,n)=>onPrep&&onPrep(`PDF "${f.name}" — page ${p}/${n}`));
       chunk(sides,sidesPerCard).forEach(g=>jobs.push({sides:g,label:f.name}));
     } else if(f.type.startsWith('image/')||/\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)){
-      if(onPrep) onPrep('Photo taiyaar…');
+      if(onPrep) onPrep('Preparing photo…');
       imgPending.push(await imageFileToSide(f));
     }
   }
@@ -619,27 +634,27 @@ function logLine(cls,html){
 }
 async function runScan(fileList){
   if(!fileList||!fileList.length) return;
-  if(!window.Tesseract){ toast('❌ OCR engine load nahi hua — page refresh karo'); return; }
+  if(!window.Tesseract){ toast('❌ OCR engine not loaded — please refresh the page'); return; }
   stopFlag=false;
   $('#progress').style.display='block';
   $('#log').innerHTML='';
   $('#btnStop').style.display='block';
   $('#btnPick').disabled=$('#btnCam').disabled=true;
-  $('#progText').innerHTML='<span class="spin"></span> Files taiyaar ho rahi hain…';
+  $('#progText').innerHTML='<span class="spin"></span> Preparing files…';
   $('#progBar').style.width='2%';
 
   let jobs;
   try{ jobs=await filesToJobs(fileList, $('#pairToggle').checked?2:1, msg=>{ $('#progText').innerHTML='<span class="spin"></span> '+esc(msg); }); }
   catch(e){ toast('❌ File padhne me dikkat: '+e.message); resetScanUI(); return; }
-  if(!jobs.length){ toast('Koi valid image/PDF nahi mila'); resetScanUI(); return; }
+  if(!jobs.length){ toast('No valid image/PDF found'); resetScanUI(); return; }
 
-  logLine('run',`${jobs.length} card mile — OCR engine start ho raha hai (pehli baar thoda time lagta hai)…`);
+  logLine('run',`${jobs.length} card(s) found — starting OCR engine (first run takes a moment)…`);
 
   let done=0, ok=0, fail=0;
   for(let i=0;i<jobs.length;i++){
-    if(stopFlag){ logLine('err','⏹ Roka gaya'); break; }
+    if(stopFlag){ logLine('err','⏹ Stopped'); break; }
     const job=jobs[i];
-    logLine('run',`Card ${i+1} padha ja raha hai …`);
+    logLine('run',`Reading card ${i+1} …`);
     try{
       const rec=await ocrCard(job.sides,(pr)=>{
         $('#progText').innerHTML=`<span class="spin"></span> Card ${i+1} / ${jobs.length} — ${Math.round(pr*100)}%`;
@@ -651,7 +666,7 @@ async function runScan(fileList){
       ok++;
       $('#log').firstChild.querySelector('.dot').className='dot ok';
       $('#log').firstChild.querySelector('span:last-child').innerHTML=
-        `✅ <b>${esc(rec.name||'(naam check karo)')}</b> ${rec.phone?'· 📞 '+esc(rec.phone.split(',')[0]):''} <span class="chip cat">${esc(rec.category)}</span>`;
+        `✅ <b>${esc(rec.name||'(check name)')}</b> ${rec.phone?'· 📞 '+esc(rec.phone.split(',')[0]):''} <span class="chip cat">${esc(rec.category)}</span>`;
     }catch(e){
       fail++;
       $('#log').firstChild.querySelector('.dot').className='dot err';
@@ -661,10 +676,10 @@ async function runScan(fileList){
     $('#progBar').style.width=Math.round((done/jobs.length)*100)+'%';
     updateCount();
   }
-  $('#progText').innerHTML=`✅ Ho gaya — ${ok} card add, ${fail} fail (kul ${jobs.length}). Ab "Cards" me check/edit karo.`;
+  $('#progText').innerHTML=`✅ Done — ${ok} added, ${fail} failed (of ${jobs.length}). Check/edit them in "Cards".`;
   resetScanUI(true);
   updateCount();
-  if(ok) toast(`✅ ${ok} card add ho gaye`);
+  if(ok) toast(`✅ ${ok} card(s) added`);
 }
 function resetScanUI(keepText){
   $('#btnStop').style.display='none';
@@ -676,7 +691,7 @@ function resetScanUI(keepText){
 function updateCount(){ $('#hdrCount').textContent=cards.length; }
 function renderCatFilter(){
   const sel=$('#catFilter'); const cur=sel.value;
-  sel.innerHTML='<option value="">Sab category</option>'+CATEGORIES.map(c=>`<option>${c}</option>`).join('');
+  sel.innerHTML='<option value="">All categories</option>'+CATEGORIES.map(c=>`<option>${c}</option>`).join('');
   sel.value=cur;
 }
 function initials(name){
@@ -690,7 +705,7 @@ function renderStats(){
   $('#stats').innerHTML=
     `<div class="stat"><b>${total}</b><span>Total</span></div>`+
     `<div class="stat"><b>${docs}</b><span>Doctors</span></div>`+
-    `<div class="stat"><b>${withPhone}</b><span>Phone hai</span></div>`;
+    `<div class="stat"><b>${withPhone}</b><span>With phone</span></div>`;
 }
 function renderList(){
   renderStats();
@@ -701,7 +716,7 @@ function renderList(){
   if(cat) rows=rows.filter(r=>r.category===cat);
   if(q) rows=rows.filter(r=>[r.name,r.company,r.phone,r.city,r.email,r.nativeText,r.specialization].join(' ').toLowerCase().includes(q));
   if(!rows.length){
-    list.innerHTML=`<div class="empty"><div class="big">🪪</div>${cards.length?'Kuch match nahi hua.':'Abhi koi card nahi.<br>“Scan” me ja ke card add karo.'}</div>`;
+    list.innerHTML=`<div class="empty"><div class="big">🪪</div>${cards.length?'No matches found.':'No cards yet.<br>Go to “Scan” to add cards.'}</div>`;
     return;
   }
   list.innerHTML=rows.map(r=>`
@@ -750,14 +765,14 @@ $('#editSave').onclick=async()=>{
   const id=+$('#f_id').value; const r=cards.find(c=>c.id===id); if(!r) return;
   FIELDS.forEach(f=>{ const el=$('#f_'+f); if(el) r[f]=el.value.trim(); });
   await DB.put('cards',r);
-  closeEdit(); renderList(); toast('💾 Save ho gaya');
+  closeEdit(); renderList(); toast('💾 Saved');
 };
 $('#editDelete').onclick=async()=>{
   const id=+$('#f_id').value;
-  if(!confirm('Ye card delete karein?')) return;
+  if(!confirm('Delete this card?')) return;
   await DB.del('cards',id);
   cards=cards.filter(c=>c.id!==id);
-  closeEdit(); renderList(); updateCount(); toast('🗑️ Delete ho gaya');
+  closeEdit(); renderList(); updateCount(); toast('🗑️ Deleted');
 };
 
 /* ---------------- Export ---------------- */
@@ -777,7 +792,7 @@ function rowsForExport(){
   });
 }
 $('#btnXlsx').onclick=()=>{
-  if(!cards.length){ toast('Koi card nahi'); return; }
+  if(!cards.length){ toast('No cards yet'); return; }
   const ws=XLSX.utils.json_to_sheet(rowsForExport());
   ws['!cols']=[{wch:5},{wch:22},{wch:14},{wch:24},{wch:16},{wch:18},{wch:22},{wch:22},{wch:22},{wch:30},{wch:14},{wch:10},{wch:20},{wch:24},{wch:12}];
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Cards');
@@ -785,7 +800,7 @@ $('#btnXlsx').onclick=()=>{
   toast('📊 Excel download');
 };
 $('#btnCsv').onclick=()=>{
-  if(!cards.length){ toast('Koi card nahi'); return; }
+  if(!cards.length){ toast('No cards yet'); return; }
   const ws=XLSX.utils.json_to_sheet(rowsForExport());
   const csv=XLSX.utils.sheet_to_csv(ws);
   downloadBlob(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}),`visiting-cards-${new Date().toISOString().slice(0,10)}.csv`);
@@ -798,7 +813,7 @@ function downloadBlob(blob,name){
 $('#btnBackup').onclick=async()=>{
   const bundle={app:'visiting-cards',version:1,exported:new Date().toISOString(),cards};
   downloadBlob(new Blob([JSON.stringify(bundle)],{type:'application/json'}),`cards-backup-${new Date().toISOString().slice(0,10)}.json`);
-  toast('⬇️ Backup ban gaya');
+  toast('⬇️ Backup created');
 };
 $('#btnRestore').onclick=()=>$('#restorePick').click();
 $('#restorePick').onchange=async(e)=>{
@@ -806,17 +821,17 @@ $('#restorePick').onchange=async(e)=>{
   try{
     const b=JSON.parse(await f.text());
     const inc=b.cards||[];
-    if(!Array.isArray(inc)) throw new Error('galat file');
-    if(!confirm(`${inc.length} card restore karein? (abhi ke ${cards.length} card ke saath add honge)`)){ e.target.value=''; return; }
+    if(!Array.isArray(inc)) throw new Error('invalid file');
+    if(!confirm(`Restore ${inc.length} card(s)? (added to your current ${cards.length})`)){ e.target.value=''; return; }
     for(const c of inc){ const {id,...rest}=c; const nid=await DB.add('cards',rest); rest.id=nid; cards.push(rest); }
-    renderList(); updateCount(); toast(`⬆️ ${inc.length} card restore ho gaye`);
-  }catch(err){ toast('❌ Restore fail: '+err.message); }
+    renderList(); updateCount(); toast(`⬆️ ${inc.length} card(s) restored`);
+  }catch(err){ toast('❌ Restore failed: '+err.message); }
   e.target.value='';
 };
 $('#btnClear').onclick=async()=>{
-  if(!cards.length){ toast('Kuch hai hi nahi'); return; }
-  if(!confirm(`Pakka? Saare ${cards.length} card delete ho jaayenge. Pehle Backup le lo!`)) return;
-  await DB.clear('cards'); cards=[]; renderList(); updateCount(); toast('🗑️ Sab delete');
+  if(!cards.length){ toast('Nothing to delete'); return; }
+  if(!confirm(`Are you sure? All ${cards.length} cards will be deleted. Take a backup first!`)) return;
+  await DB.clear('cards'); cards=[]; renderList(); updateCount(); toast('🗑️ All deleted');
 };
 
 /* ---------------- Settings ---------------- */
@@ -829,15 +844,38 @@ async function loadSettings(){
   $('#langHin').checked=settings.langHin;
 }
 $('#storeImg').onchange=async()=>{ settings.storeImages=$('#storeImg').checked; await DB.setMeta('storeImages',settings.storeImages); };
-$('#langGuj').onchange=async()=>{ settings.langGuj=$('#langGuj').checked; await DB.setMeta('langGuj',settings.langGuj); toast('🌐 Language change — agla scan naye engine se'); };
-$('#langHin').onchange=async()=>{ settings.langHin=$('#langHin').checked; await DB.setMeta('langHin',settings.langHin); toast('🌐 Language change — agla scan naye engine se'); };
+$('#langGuj').onchange=async()=>{ settings.langGuj=$('#langGuj').checked; await DB.setMeta('langGuj',settings.langGuj); toast('🌐 Language changed — applies to next scan'); };
+$('#langHin').onchange=async()=>{ settings.langHin=$('#langHin').checked; await DB.setMeta('langHin',settings.langHin); toast('🌐 Language changed — applies to next scan'); };
 
 /* ---------------- File pickers ---------------- */
 $('#btnPick').onclick=()=>$('#filePick').click();
 $('#btnCam').onclick=()=>$('#camPick').click();
 $('#filePick').onchange=e=>{ const f=[...e.target.files]; e.target.value=''; if(f.length) runScan(f); };
 $('#camPick').onchange=e=>{ const f=[...e.target.files]; e.target.value=''; if(f.length) runScan(f); };
-$('#btnStop').onclick=()=>{ stopFlag=true; toast('⏹ Rok raha hoon…'); };
+$('#btnStop').onclick=()=>{ stopFlag=true; toast('⏹ Stopping…'); };
+
+/* ---------------- Install (PWA) ---------------- */
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault(); deferredPrompt=e;
+  $('#installCard').style.display='block';
+});
+async function doInstall(){
+  if(!deferredPrompt){ toast('Use your browser menu → Install / Add to Home Screen'); return; }
+  deferredPrompt.prompt();
+  const { outcome }=await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  $('#installCard').style.display='none';
+  if(outcome==='accepted') toast('✅ Installing app…');
+}
+$('#btnInstall').onclick=doInstall;
+if($('#btnInstall2')) $('#btnInstall2').onclick=doInstall;
+window.addEventListener('appinstalled',()=>{ $('#installCard').style.display='none'; toast('✅ App installed'); });
+(function(){
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone=window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if(isIOS && !standalone){ const h=$('#iosHint'); if(h) h.style.display='block'; }
+})();
 
 /* ---------------- Init ---------------- */
 (async function init(){
